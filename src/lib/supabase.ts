@@ -1,3 +1,10 @@
+// DEPRECATED: This file is no longer used.
+// Please use @/integrations/supabase/client instead.
+// This file has been kept for reference only.
+//
+// The Lovable platform automatically generates the correct Supabase client
+// in src/integrations/supabase/client.ts with the proper credentials.
+
 import { createClient } from '@supabase/supabase-js'
 import { Database } from './database.types'
 
