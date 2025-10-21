@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-8 px-4">
@@ -15,6 +18,7 @@ const Index = () => {
         <Button 
           size="lg"
           className="text-lg px-8 py-6 transition-all hover:scale-105"
+          onClick={() => navigate('/jobs')}
         >
           Browse Jobs
         </Button>
