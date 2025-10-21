@@ -32,34 +32,9 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Set up environment variables
-# Copy .env.example to .env and fill in your Supabase credentials
-cp .env.example .env
-# Edit .env with your Supabase URL and keys
-
-# Step 5: Start the development server with auto-reloading and an instant preview.
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-## Environment Variables Setup
-
-This project requires Supabase environment variables. Create a `.env` file in the root directory:
-
-```env
-# Frontend Environment Variables (Vite)
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Backend/Scraper Environment Variables
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-```
-
-**How to get your Supabase credentials:**
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project
-3. Go to Settings > API
-4. Copy the Project URL and anon/service_role keys
 
 **Edit a file directly in GitHub**
 
