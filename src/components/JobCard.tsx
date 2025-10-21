@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Building2, MapPin, Clock, DollarSign, ExternalLink } from "lucide-react"
-import { Database } from "@/lib/database.types"
+import { Database } from "@/integrations/supabase/types"
 
 type Job = Database['public']['Tables']['jobs']['Row']
 
