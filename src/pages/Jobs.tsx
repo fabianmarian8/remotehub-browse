@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useJobs } from '@/hooks/useJobs'
 import { JobCard } from '@/components/JobCard'
 import { AdvancedFilters, AdvancedFilterOptions } from '@/components/AdvancedFilters'
+import { SEO } from '@/components/SEO'
+import { getJobListingSEO } from '@/utils/seo'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -75,8 +77,25 @@ export default function Jobs() {
     return diffHours < 24
   }).length || 0
 
+  // Generate SEO metadata based on current filters
+  const seoMetadata = getJobListingSEO({
+    category: category !== 'all' ? category : undefined,
+    search,
+    jobType: jobType !== 'all' ? jobType : undefined,
+  })
+
+  // Generate breadcrumbs for SEO
+  const breadcrumbs = [
+    { name: 'Home', url: window.location.origin },
+    { name: 'Jobs', url: `${window.location.origin}/jobs` },
+  ]
+  if (category && category !== 'all') {
+    breadcrumbs.push({ name: category, url: `${window.location.origin}/jobs?category=${category}` })
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <SEO metadata={seoMetadata} breadcrumbs={breadcrumbs} />
       {/* Hero Header */}
       <header className="border-b bg-gradient-to-r from-primary/5 via-background to-primary/5 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-8 md:py-12">

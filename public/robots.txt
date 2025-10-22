@@ -1,3 +1,14 @@
+# robots.txt for RemoteJobsHub
+
+# Allow all good bots
+User-agent: *
+Allow: /
+
+# Disallow private/admin areas
+Disallow: /api/
+Disallow: /admin/
+
+# Specific bot rules for better indexing
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +21,15 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Sitemap location
+Sitemap: https://remotejobshub.com/sitemap.xml
+
+# Crawl delay to be nice to our server
+Crawl-delay: 1
+
+# Limit aggressive crawlers
+User-agent: AhrefsBot
+Crawl-delay: 5
+
+User-agent: SemrushBot
+Crawl-delay: 5
