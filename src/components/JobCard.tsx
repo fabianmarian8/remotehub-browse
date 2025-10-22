@@ -1,9 +1,13 @@
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Building2, MapPin, Clock, DollarSign, ExternalLink, Sparkles } from "lucide-react"
+import { Building2, MapPin, Clock, DollarSign, ExternalLink, Sparkles, Heart } from "lucide-react"
 import { Database } from "@/integrations/supabase/types"
+import { useAuth } from "@/contexts/AuthContext"
+import { useSavedJobs } from "@/hooks/useSavedJobs"
+import { AuthDialog } from "@/components/AuthDialog"
 
 type Job = Database['public']['Tables']['jobs']['Row']
 
@@ -12,6 +16,19 @@ interface JobCardProps {
 }
 
 export function JobCard({ job }: JobCardProps) {
+  const { user } = useAuth()
+  const { isJobSaved, toggleSaveJob, isSaving } = useSavedJobs()
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
+  const isSaved = isJobSaved(job.id)
+
+  const handleSaveClick = () => {
+    if (!user) {
+      setShowAuthDialog(true)
+      return
+    }
+    toggleSaveJob(job.id)
+  }
+
   const formatSalary = () => {
     if (!job.salary_min && !job.salary_max) return null
 
@@ -26,8 +43,17 @@ export function JobCard({ job }: JobCardProps) {
     const min = job.salary_min ? `${currency}${formatNumber(job.salary_min)}` : ''
     const max = job.salary_max ? `${currency}${formatNumber(job.salary_max)}` : ''
 
-    if (min && max) return `${min} - ${max}`
-    return min || max
+    // Format period suffix
+    const periodMap: Record<string, string> = {
+      'yearly': '/year',
+      'monthly': '/month',
+      'hourly': '/hr',
+      'project': ''
+    }
+    const period = periodMap[job.salary_period || 'yearly'] || '/year'
+
+    const salaryRange = min && max ? `${min} - ${max}` : min || max
+    return `${salaryRange}${period}`
   }
 
   const formatDate = (date: string) => {
@@ -161,15 +187,32 @@ export function JobCard({ job }: JobCardProps) {
           <span className="text-sm text-muted-foreground font-medium">
             {formatDate(job.published_at)}
           </span>
-          <Button
-            size="sm"
-            onClick={() => window.open(job.apply_url, '_blank')}
-            className="gap-2 shadow-md hover:shadow-lg transition-all group-hover:scale-105"
-          >
-            Apply Now
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={isSaved ? "default" : "outline"}
+              onClick={handleSaveClick}
+              disabled={isSaving}
+              className="gap-2 transition-all"
+            >
+              <Heart
+                className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`}
+              />
+              {isSaved ? "Saved" : "Save"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => window.open(job.apply_url, '_blank')}
+              className="gap-2 shadow-md hover:shadow-lg transition-all group-hover:scale-105"
+            >
+              Apply Now
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        {/* Auth Dialog */}
+        <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
       </CardContent>
     </Card>
   )
