@@ -196,9 +196,13 @@ def insert_jobs(jobs: List[Dict]) -> Dict[str, int]:
             if 'unique' in error_msg or 'duplicate' in error_msg:
                 stats['duplicates'] += 1
                 print(f"  ⏭️  Skipped (duplicate): {job['title']} at {job['company']}")
+                # Show first duplicate error for debugging
+                if stats['duplicates'] == 1:
+                    print(f"     → First duplicate error: {str(e)[:200]}")
             else:
                 stats['errors'] += 1
                 print(f"  ❌ Error inserting {job['title']}: {str(e)}")
+                print(f"     Full error: {repr(e)}")
 
     return stats
 
