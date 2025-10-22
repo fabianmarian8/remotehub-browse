@@ -2,33 +2,54 @@
 
 ## Krok 1: Spustenie SQL Migration
 
-1. Choď na: https://supabase.com/dashboard/project/kmlnucziquwadmjuyuzi
+1. Choď na: https://supabase.com/dashboard/project/kkuybturazislquqaxci
 2. V ľavom menu klikni na **SQL Editor**
 3. Klikni na **New query**
 4. Otvor súbor `001_create_jobs_table.sql`
 5. Skopíruj celý obsah a vlož ho do SQL editora
 6. Klikni **Run** (alebo Ctrl+Enter)
 
-## Krok 2: Overenie
+## Krok 2: Vloženie testovacích dát (voliteľné)
 
-Po spustení SQL skriptu by si mal vidieť:
+1. V SQL Editore vytvor **New query**
+2. Otvor súbor `002_insert_sample_jobs.sql`
+3. Skopíruj celý obsah a vlož ho do SQL editora
+4. Klikni **Run** (alebo Ctrl+Enter)
+
+Tento skript pridá 8 vzorových job listingov, aby si mohol ihneď vidieť fungujúcu aplikáciu.
+
+## Krok 3: Overenie
+
+Po spustení SQL skriptov by si mal vidieť:
 - ✅ Tabuľka `jobs` vytvorená
 - ✅ Indexy vytvorené
 - ✅ RLS policies nastavené
 - ✅ Trigger pre updated_at
+- ✅ 8 testovacích jobov v databáze (ak si spustil krok 2)
 
-## Krok 3: Testovanie
+## Krok 4: Testovanie
 
 V SQL Editore spusti:
 ```sql
-SELECT * FROM public.jobs LIMIT 10;
+SELECT COUNT(*) FROM public.jobs WHERE is_active = true;
 ```
 
-Mali by si dostať prázdny výsledok (zatiaľ žiadne jobs).
+Mali by si vidieť počet aktívnych jobov (8 ak si spustil testové dáta).
+
+## Krok 5: Otestuj aplikáciu
+
+1. Spusti aplikáciu: `npm run dev`
+2. Otvor http://localhost:5173
+3. Klikni na "Browse Jobs"
+4. Mali by sa ti zobraziť všetky aktívne job listings
+
+## Problém s typmi?
+
+Ak máš TypeScript chyby, súbor `src/integrations/supabase/types.ts` bol už aktualizovaný s definíciou tabuľky `jobs`. Reštartuj TypeScript server vo svojom editore.
 
 ## Ďalšie kroky
 
-Po úspešnom vytvorení databázy môžeme:
-1. Vytvoriť Job Listing stránku v Reacte
-2. Vytvoriť Python scraper
-3. Naplniť databázu prvými jobmi
+Po úspešnom nastavení databázy môžeš:
+1. ✅ Job Listing stránka už je vytvorená v `src/pages/Jobs.tsx`
+2. Vytvoriť Python scraper na automatické načítanie jobov
+3. Pridať viac funkcií (filtrovanie, vyhľadávanie, favority, atď.)
