@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Search, Loader2, Briefcase, TrendingUp, Filter, X } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Link } from 'react-router-dom'
 
 export default function Jobs() {
   const [search, setSearch] = useState('')
@@ -89,7 +90,7 @@ export default function Jobs() {
 
             {/* Stats */}
             {!isLoading && data && (
-              <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex flex-wrap items-center gap-4 mb-6">
                 <Badge variant="secondary" className="px-4 py-2 text-sm font-semibold">
                   <Briefcase className="h-4 w-4 mr-2" />
                   {data.count.toLocaleString()} Active Jobs
@@ -100,6 +101,12 @@ export default function Jobs() {
                     {newJobsCount} New Today
                   </Badge>
                 )}
+                <Button variant="outline" size="sm" asChild className="ml-auto">
+                  <Link to="/trends">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    View Market Trends
+                  </Link>
+                </Button>
               </div>
             )}
 
