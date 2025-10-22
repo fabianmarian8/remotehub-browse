@@ -14,13 +14,13 @@ import os
 import sys
 import time
 import requests
-import feedparser
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from bs4 import BeautifulSoup
 import re
+import xml.etree.ElementTree as ET
 
 # Load environment variables
 load_dotenv()
@@ -138,6 +138,53 @@ def clean_html(html_text: str) -> str:
     return soup.get_text(separator='\n', strip=True)
 
 
+def parse_rss_feed(url: str) -> List[Dict]:
+    """Parse RSS feed using requests and xml.etree"""
+    try:
+        headers = {'User-Agent': 'RemoteJobsHub/1.0 (Job Aggregator)'}
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        # Parse XML
+        root = ET.fromstring(response.content)
+
+        # Find all items in the feed
+        items = []
+        # Try both RSS 2.0 and Atom formats
+        for item in root.findall('.//item'):  # RSS 2.0
+            entry = {}
+            title_elem = item.find('title')
+            link_elem = item.find('link')
+            desc_elem = item.find('description')
+            pubdate_elem = item.find('pubDate')
+
+            entry['title'] = title_elem.text if title_elem is not None else ''
+            entry['link'] = link_elem.text if link_elem is not None else ''
+            entry['description'] = desc_elem.text if desc_elem is not None else ''
+            entry['pubDate'] = pubdate_elem.text if pubdate_elem is not None else ''
+
+            items.append(entry)
+
+        # Also try Atom format
+        for entry_elem in root.findall('.//{http://www.w3.org/2005/Atom}entry'):
+            entry = {}
+            title_elem = entry_elem.find('{http://www.w3.org/2005/Atom}title')
+            link_elem = entry_elem.find('{http://www.w3.org/2005/Atom}link')
+            content_elem = entry_elem.find('{http://www.w3.org/2005/Atom}content')
+
+            entry['title'] = title_elem.text if title_elem is not None else ''
+            entry['link'] = link_elem.get('href', '') if link_elem is not None else ''
+            entry['description'] = content_elem.text if content_elem is not None else ''
+            entry['pubDate'] = ''
+
+            items.append(entry)
+
+        return items
+    except Exception as e:
+        print(f"Error parsing RSS feed {url}: {str(e)}")
+        return []
+
+
 def scrape_remoteok() -> List[Dict]:
     """Scrape jobs from RemoteOK API"""
     print("\n🔍 Scraping RemoteOK...")
@@ -241,9 +288,9 @@ def scrape_weworkremotely() -> List[Dict]:
 
     for feed_url, default_category in rss_feeds:
         try:
-            feed = feedparser.parse(feed_url)
+            entries = parse_rss_feed(feed_url)
 
-            for entry in feed.entries[:50]:  # 50 per category
+            for entry in entries[:50]:  # 50 per category
                 try:
                     # Extract job details
                     title = entry.get('title', 'Untitled')
@@ -261,8 +308,6 @@ def scrape_weworkremotely() -> List[Dict]:
 
                     # Parse published date
                     published_at = datetime.now(timezone.utc).isoformat()
-                    if hasattr(entry, 'published_parsed') and entry.published_parsed:
-                        published_at = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc).isoformat()
 
                     # Generate unique ID from link
                     source_id = link.split('/')[-1] if link else str(hash(title + company))
@@ -388,10 +433,10 @@ def scrape_remote_co() -> List[Dict]:
     print("\n🔍 Scraping Remote.co...")
 
     try:
-        feed = feedparser.parse(REMOTE_CO_RSS)
+        entries = parse_rss_feed(REMOTE_CO_RSS)
         jobs = []
 
-        for entry in feed.entries[:100]:  # Get up to 100 jobs
+        for entry in entries[:100]:  # Get up to 100 jobs
             try:
                 title = entry.get('title', 'Untitled')
                 link = entry.get('link', '')
@@ -407,8 +452,6 @@ def scrape_remote_co() -> List[Dict]:
 
                 # Parse published date
                 published_at = datetime.now(timezone.utc).isoformat()
-                if hasattr(entry, 'published_parsed') and entry.published_parsed:
-                    published_at = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc).isoformat()
 
                 # Generate unique ID from link
                 source_id = link.split('/')[-2] if link else str(hash(title + company))
