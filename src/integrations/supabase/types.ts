@@ -73,6 +73,9 @@ export type Database = {
           salary_min: number | null
           salary_max: number | null
           salary_currency: string
+          salary_period: 'yearly' | 'monthly' | 'hourly' | 'project'
+          remote_type: 'fully-remote' | 'hybrid' | 'on-site' | 'timezone-specific' | null
+          company_size: 'startup' | 'small' | 'medium' | 'large' | 'enterprise' | null
           apply_url: string
           company_url: string | null
           company_logo_url: string | null
@@ -98,6 +101,9 @@ export type Database = {
           salary_min?: number | null
           salary_max?: number | null
           salary_currency?: string
+          salary_period?: 'yearly' | 'monthly' | 'hourly' | 'project'
+          remote_type?: 'fully-remote' | 'hybrid' | 'on-site' | 'timezone-specific' | null
+          company_size?: 'startup' | 'small' | 'medium' | 'large' | 'enterprise' | null
           apply_url: string
           company_url?: string | null
           company_logo_url?: string | null
@@ -123,6 +129,9 @@ export type Database = {
           salary_min?: number | null
           salary_max?: number | null
           salary_currency?: string
+          salary_period?: 'yearly' | 'monthly' | 'hourly' | 'project'
+          remote_type?: 'fully-remote' | 'hybrid' | 'on-site' | 'timezone-specific' | null
+          company_size?: 'startup' | 'small' | 'medium' | 'large' | 'enterprise' | null
           apply_url?: string
           company_url?: string | null
           company_logo_url?: string | null
@@ -169,6 +178,133 @@ export type Database = {
           pickup?: string
         }
         Relationships: []
+      }
+      saved_jobs: {
+        Row: {
+          id: string
+          user_id: string
+          job_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          job_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          job_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          categories: string[]
+          job_types: string[]
+          remote_types: string[]
+          company_sizes: string[]
+          salary_min: number | null
+          salary_max: number | null
+          keywords: string[]
+          email_alerts_enabled: boolean
+          alert_frequency: 'daily' | 'weekly' | 'instant'
+          last_alert_sent_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          categories?: string[]
+          job_types?: string[]
+          remote_types?: string[]
+          company_sizes?: string[]
+          salary_min?: number | null
+          salary_max?: number | null
+          keywords?: string[]
+          email_alerts_enabled?: boolean
+          alert_frequency?: 'daily' | 'weekly' | 'instant'
+          last_alert_sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          categories?: string[]
+          job_types?: string[]
+          remote_types?: string[]
+          company_sizes?: string[]
+          salary_min?: number | null
+          salary_max?: number | null
+          keywords?: string[]
+          email_alerts_enabled?: boolean
+          alert_frequency?: 'daily' | 'weekly' | 'instant'
+          last_alert_sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      email_alerts_log: {
+        Row: {
+          id: string
+          user_id: string
+          jobs_sent: number
+          sent_at: string
+          status: 'sent' | 'failed' | 'bounced'
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          jobs_sent?: number
+          sent_at?: string
+          status?: 'sent' | 'failed' | 'bounced'
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          jobs_sent?: number
+          sent_at?: string
+          status?: 'sent' | 'failed' | 'bounced'
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_alerts_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

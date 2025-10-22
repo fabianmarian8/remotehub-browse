@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useJobs } from '@/hooks/useJobs'
 import { JobCard } from '@/components/JobCard'
+import { AdvancedFilters, AdvancedFilterOptions } from '@/components/AdvancedFilters'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,12 +13,16 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Search, Loader2, Briefcase, TrendingUp, Filter, X } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/use-mobile'
 
 export default function Jobs() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<string>()
   const [jobType, setJobType] = useState<string>()
   const [page, setPage] = useState(0)
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilterOptions>({})
+
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const limit = 20
   const offset = page * limit
@@ -27,17 +32,37 @@ export default function Jobs() {
     category: category === 'all' ? undefined : category,
     jobType: jobType === 'all' ? undefined : jobType,
     limit,
-    offset
+    offset,
+    ...advancedFilters,
   })
 
   const totalPages = data ? Math.ceil(data.count / limit) : 0
 
-  const hasFilters = search || (category && category !== 'all') || (jobType && jobType !== 'all')
+  const hasBasicFilters = search || (category && category !== 'all') || (jobType && jobType !== 'all')
+  const hasAdvancedFilters =
+    advancedFilters.salaryMin ||
+    advancedFilters.salaryMax ||
+    (advancedFilters.categories && advancedFilters.categories.length > 0) ||
+    (advancedFilters.remoteTypes && advancedFilters.remoteTypes.length > 0) ||
+    (advancedFilters.companySizes && advancedFilters.companySizes.length > 0)
+
+  const hasFilters = hasBasicFilters || hasAdvancedFilters
 
   const clearFilters = () => {
     setSearch('')
     setCategory(undefined)
     setJobType(undefined)
+    setAdvancedFilters({})
+    setPage(0)
+  }
+
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({})
+    setPage(0)
+  }
+
+  const handleAdvancedFiltersChange = (filters: AdvancedFilterOptions) => {
+    setAdvancedFilters(filters)
     setPage(0)
   }
 
@@ -146,6 +171,16 @@ export default function Jobs() {
                     Clear
                   </Button>
                 )}
+              </div>
+
+              {/* Advanced Filters */}
+              <div className="mt-3">
+                <AdvancedFilters
+                  filters={advancedFilters}
+                  onChange={handleAdvancedFiltersChange}
+                  onClear={clearAdvancedFilters}
+                  isMobile={isMobile}
+                />
               </div>
             </div>
           </div>
