@@ -13,7 +13,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Search, Loader2, Briefcase, TrendingUp, Filter, X } from 'lucide-react'
-import { useMediaQuery } from '@/hooks/use-mobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export default function Jobs() {
   const [search, setSearch] = useState('')
@@ -22,7 +22,7 @@ export default function Jobs() {
   const [page, setPage] = useState(0)
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilterOptions>({})
 
-  const isMobile = useMediaQuery('(max-width: 768px)')
+  const isMobile = useIsMobile()
 
   const limit = 20
   const offset = page * limit
