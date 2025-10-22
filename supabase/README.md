@@ -18,16 +18,32 @@
 
 Tento skript pridá 8 vzorových job listingov, aby si mohol ihneď vidieť fungujúcu aplikáciu.
 
-## Krok 3: Overenie
+## Krok 3: Oprava RLS Policies (DÔLEŽITÉ!)
 
-Po spustení SQL skriptov by si mal vidieť:
+⚠️ **KRITICKÝ KROK** - Bez tohto scraper nebude fungovať!
+
+1. V SQL Editore vytvor **New query**
+2. Otvor súbor `003_fix_rls_policies.sql`
+3. Skopíruj celý obsah a vlož ho do SQL editora
+4. Klikni **Run** (alebo Ctrl+Enter)
+
+Tento skript opraví Row Level Security policies, aby service_role (scraper) mohol vkladať joby do databázy.
+
+**Čo to opraví:**
+- ✅ Service role získa explicitné permissions pre INSERT, UPDATE, SELECT
+- ✅ Scraper bude môcť pridávať nové joby
+- ✅ Frontend (anon key) bude vidieť len aktívne joby
+
+## Krok 4: Overenie
+
+Po spustení všetkých SQL skriptov by si mal vidieť:
 - ✅ Tabuľka `jobs` vytvorená
 - ✅ Indexy vytvorené
-- ✅ RLS policies nastavené
+- ✅ RLS policies OPRAVENÉ (4 nové policies)
 - ✅ Trigger pre updated_at
 - ✅ 8 testovacích jobov v databáze (ak si spustil krok 2)
 
-## Krok 4: Testovanie
+## Krok 5: Testovanie
 
 V SQL Editore spusti:
 ```sql
@@ -36,7 +52,7 @@ SELECT COUNT(*) FROM public.jobs WHERE is_active = true;
 
 Mali by si vidieť počet aktívnych jobov (8 ak si spustil testové dáta).
 
-## Krok 5: Otestuj aplikáciu
+## Krok 6: Otestuj aplikáciu
 
 1. Spusti aplikáciu: `npm run dev`
 2. Otvor http://localhost:5173
