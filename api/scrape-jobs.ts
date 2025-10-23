@@ -243,7 +243,7 @@ async function insertJobs(jobs: JobData[]): Promise<ScraperStats> {
 
   for (const job of jobs) {
     try {
-      const { data, error } = await supabase.table('jobs').insert(job);
+      const { data, error } = await supabase.from('jobs').insert(job);
 
       if (error) {
         const errorMsg = error.message.toLowerCase();
@@ -285,7 +285,7 @@ async function deactivateOldJobs(days: number = 30): Promise<number> {
       return 0;
     }
 
-    const count = data?.length || 0;
+    const count = (data && Array.isArray(data)) ? data.length : 0;
     console.log(`✅ Deactivated ${count} old jobs`);
     return count;
   } catch (error) {
