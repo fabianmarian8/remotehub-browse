@@ -243,7 +243,7 @@ async function insertJobs(jobs: JobData[]): Promise<ScraperStats> {
 
   for (const job of jobs) {
     try {
-      const { data, error } = await supabase.table('jobs').insert(job);
+      const { data, error } = await supabase.from('jobs').insert(job);
 
       if (error) {
         const errorMsg = error.message.toLowerCase();
