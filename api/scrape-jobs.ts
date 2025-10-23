@@ -277,7 +277,8 @@ async function deactivateOldJobs(days: number = 30): Promise<number> {
       .from('jobs')
       .update({ is_active: false })
       .lt('published_at', cutoffDate.toISOString())
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .select();
 
     if (error) {
       console.error('Error deactivating old jobs:', error);
