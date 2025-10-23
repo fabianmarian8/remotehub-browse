@@ -153,7 +153,8 @@ async function scrapeRemoteOK(): Promise<JobData[]> {
     }
 
     const data = await response.json();
-    const jobsData = data.slice(1, 501); // Skip metadata, get first 500
+    console.log(`  RemoteOK API returned ${data.length} total items`);
+    const jobsData = data.slice(1, Math.min(501, data.length)); // Skip metadata, get up to 500
 
     const jobs: JobData[] = [];
 
@@ -487,27 +488,50 @@ async function insertJobs(jobs: JobData[]): Promise<ScraperStats> {
 
   console.log(`📥 Inserting ${jobs.length} jobs into database...`);
 
-  for (const job of jobs) {
+  // Batch insert - much faster than individual inserts
+  const BATCH_SIZE = 100;
+
+  for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
+    const batch = jobs.slice(i, i + BATCH_SIZE);
+
     try {
-      const { data, error } = await supabase.from('jobs').insert(job);
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert(batch)
+        .select();
 
       if (error) {
-        const errorMsg = error.message.toLowerCase();
-        if (errorMsg.includes('unique') || errorMsg.includes('duplicate')) {
-          stats.duplicates++;
+        // If batch fails due to duplicates, try individually
+        if (error.message.toLowerCase().includes('unique') || error.message.toLowerCase().includes('duplicate')) {
+          console.log(`  Batch ${i}-${i + batch.length} has duplicates, processing individually...`);
+          for (const job of batch) {
+            try {
+              const { error: singleError } = await supabase.from('jobs').insert(job);
+              if (singleError) {
+                const errorMsg = singleError.message.toLowerCase();
+                if (errorMsg.includes('unique') || errorMsg.includes('duplicate')) {
+                  stats.duplicates++;
+                } else {
+                  stats.errors++;
+                }
+              } else {
+                stats.inserted++;
+              }
+            } catch (err) {
+              stats.errors++;
+            }
+          }
         } else {
-          stats.errors++;
-          console.error(`Error inserting ${job.title}:`, error.message);
+          console.error(`Batch insert error:`, error.message);
+          stats.errors += batch.length;
         }
       } else {
-        stats.inserted++;
-        if (stats.inserted <= 10) { // Only log first 10 to avoid spam
-          console.log(`  ✅ Inserted: ${job.title} at ${job.company}`);
-        }
+        stats.inserted += data?.length || batch.length;
+        console.log(`  ✅ Inserted batch ${i}-${i + batch.length}: ${data?.length || 0} jobs`);
       }
     } catch (err) {
-      stats.errors++;
-      console.error('Unexpected error:', err);
+      console.error('Unexpected batch error:', err);
+      stats.errors += batch.length;
     }
   }
 
