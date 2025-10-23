@@ -51,7 +51,13 @@ SUPABASE_SERVICE_KEY = tvoj_service_role_key
 Po deployi:
 - ✅ Scraper sa automaticky spustí **1x denne**
 - ✅ Schedule: `0 8 * * *` (každý deň o 8:00 UTC / 9:00 Bratislava)
-- ✅ Získa 200+ ponúk z RemoteOK a Remotive
+- ✅ Získa ponuky z **5 zdrojov**:
+  - RemoteOK (500 ponúk)
+  - Remotive (300 ponúk)
+  - We Work Remotely (500 ponúk)
+  - Working Nomads (200 ponúk)
+  - JustRemote (400 ponúk)
+- ✅ Celkom **1500-1900 ponúk denne**!
 - ✅ Automaticky deaktivuje staré ponuky (>30 dní)
 
 **Poznámka:** Vercel Hobby tier podporuje len denné cron jobs. Pre častejšie spúšťanie (každé 3-6 hodín) je potrebný Pro plan ($20/mesiac).
@@ -133,11 +139,16 @@ Uprav `vercel.json`:
 
 Po nasadení:
 - ✅ Scraper beží automaticky 1x denne (8:00 UTC / 9:00 Bratislava)
-- ✅ Získavaš 200+ ponúk z RemoteOK
-- ✅ Získavaš 100+ ponúk z Remotive
-- ✅ Celkom ~300 nových ponúk denne
+- ✅ Získavaš ponuky z **5 zdrojov**:
+  - RemoteOK: 500 ponúk
+  - Remotive: 300 ponúk
+  - We Work Remotely: 500 ponúk
+  - Working Nomads: 200 ponúk
+  - JustRemote: 400 ponúk
+- ✅ Celkom **1500-1900 nových ponúk denne**! 🚀
 - ✅ Žiadne 403 errors!
 - ✅ 100% zadarmo (Vercel Hobby tier)
+- ✅ **Konkurencieschopný počet ponúk!**
 
 **Tip:** Môžeš spustiť scraper aj **manuálne** kedykoľvek potrebuješ - jednoducho navštív `/api/scrape-jobs` endpoint!
 
