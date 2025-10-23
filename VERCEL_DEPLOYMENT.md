@@ -49,10 +49,12 @@ SUPABASE_SERVICE_KEY = tvoj_service_role_key
 ## 🔄 Ako Funguje Cron Job
 
 Po deployi:
-- ✅ Scraper sa automaticky spustí **každých 6 hodín**
-- ✅ Schedule: `0 */6 * * *` (00:00, 06:00, 12:00, 18:00 UTC)
+- ✅ Scraper sa automaticky spustí **1x denne**
+- ✅ Schedule: `0 8 * * *` (každý deň o 8:00 UTC / 9:00 Bratislava)
 - ✅ Získa 200+ ponúk z RemoteOK a Remotive
 - ✅ Automaticky deaktivuje staré ponuky (>30 dní)
+
+**Poznámka:** Vercel Hobby tier podporuje len denné cron jobs. Pre častejšie spúšťanie (každé 3-6 hodín) je potrebný Pro plan ($20/mesiac).
 
 ## 🧪 Manuálne Testovanie
 
@@ -85,7 +87,7 @@ curl https://tvoj-projekt.vercel.app/api/scrape-jobs
 
 ## 🔧 Zmena Schedule
 
-Ak chceš zmeniť frekvenciu scraping-u:
+Ak chceš zmeniť čas denného spustenia:
 
 Uprav `vercel.json`:
 ```json
@@ -93,16 +95,21 @@ Uprav `vercel.json`:
   "crons": [
     {
       "path": "/api/scrape-jobs",
-      "schedule": "0 */3 * * *"  // Každé 3 hodiny
+      "schedule": "0 12 * * *"  // Každý deň o 12:00 UTC
     }
   ]
 }
 ```
 
-**Cron formát:**
+**Cron formát (Hobby tier - len daily):**
+- `0 8 * * *` - Každý deň o 8:00 UTC (9:00 Bratislava)
+- `0 12 * * *` - Každý deň o 12:00 UTC (13:00 Bratislava)
+- `0 0 * * *` - Každý deň o polnoci UTC
+- `0 20 * * *` - Každý deň o 20:00 UTC (21:00 Bratislava)
+
+**Pre častejšie spúšťanie (vyžaduje Pro tier $20/mesiac):**
 - `0 */6 * * *` - Každých 6 hodín
 - `0 */3 * * *` - Každé 3 hodiny
-- `0 0 * * *` - Každý deň o polnoci
 - `0 8,14,20 * * *` - 3x denne (8:00, 14:00, 20:00)
 
 ## ❓ Troubleshooting
@@ -125,12 +132,14 @@ Uprav `vercel.json`:
 ## 🎉 Výsledok
 
 Po nasadení:
-- ✅ Scraper beží automaticky každých 6 hodín
+- ✅ Scraper beží automaticky 1x denne (8:00 UTC / 9:00 Bratislava)
 - ✅ Získavaš 200+ ponúk z RemoteOK
 - ✅ Získavaš 100+ ponúk z Remotive
-- ✅ Celkom ~300+ nových ponúk denne
+- ✅ Celkom ~300 nových ponúk denne
 - ✅ Žiadne 403 errors!
 - ✅ 100% zadarmo (Vercel Hobby tier)
+
+**Tip:** Môžeš spustiť scraper aj **manuálne** kedykoľvek potrebuješ - jednoducho navštív `/api/scrape-jobs` endpoint!
 
 ## 📞 Podpora
 
