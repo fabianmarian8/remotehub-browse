@@ -18,21 +18,37 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 // API URLs
 const REMOTEOK_API = 'https://remoteok.com/api';
 const REMOTIVE_API = 'https://remotive.com/api/remote-jobs';
+const WWR_RSS = 'https://weworkremotely.com/categories/remote-programming-jobs.rss';
+const WORKING_NOMADS_API = 'https://www.workingnomads.com/api/exposed_jobs/';
+const JUSTREMOTE_RSS = 'https://justremote.co/feed/remote-jobs';
 
 // Category mapping
 const CATEGORY_MAPPING: Record<string, string> = {
   dev: 'Engineering',
+  developer: 'Engineering',
+  engineer: 'Engineering',
+  programming: 'Engineering',
+  software: 'Engineering',
+  frontend: 'Engineering',
+  backend: 'Engineering',
+  fullstack: 'Engineering',
+  'full-stack': 'Engineering',
   design: 'Design',
+  designer: 'Design',
+  ux: 'Design',
+  ui: 'Design',
   marketing: 'Marketing',
   sales: 'Sales',
   support: 'Customer Support',
+  customer: 'Customer Support',
   product: 'Product',
   data: 'Data',
+  analytics: 'Data',
   ops: 'Engineering',
+  devops: 'Engineering',
   finance: 'Other',
   legal: 'Other',
   hr: 'Other',
-  customer: 'Customer Support',
   engineering: 'Engineering',
 };
 
@@ -96,6 +112,30 @@ function normalizeJobType(originalType: string): string {
   return 'Full-time';
 }
 
+function parseXML(xmlString: string): any[] {
+  const items: any[] = [];
+  const itemMatches = xmlString.match(/<item>[\s\S]*?<\/item>/g);
+
+  if (!itemMatches) return items;
+
+  for (const item of itemMatches) {
+    const getTag = (tag: string) => {
+      const match = item.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+      return match ? (match[1] || match[2] || '').trim() : '';
+    };
+
+    items.push({
+      title: getTag('title'),
+      link: getTag('link'),
+      description: getTag('description'),
+      pubDate: getTag('pubDate'),
+      category: getTag('category'),
+    });
+  }
+
+  return items;
+}
+
 async function scrapeRemoteOK(): Promise<JobData[]> {
   console.log('🔍 Scraping RemoteOK...');
 
@@ -113,7 +153,7 @@ async function scrapeRemoteOK(): Promise<JobData[]> {
     }
 
     const data = await response.json();
-    const jobsData = data.slice(1, 201); // Skip metadata, get first 200
+    const jobsData = data.slice(1, 501); // Skip metadata, get first 500
 
     const jobs: JobData[] = [];
 
@@ -168,7 +208,7 @@ async function scrapeRemotive(): Promise<JobData[]> {
   console.log('🔍 Scraping Remotive...');
 
   try {
-    const response = await fetch(`${REMOTIVE_API}?limit=100`, {
+    const response = await fetch(`${REMOTIVE_API}?limit=300`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
@@ -232,6 +272,212 @@ async function scrapeRemotive(): Promise<JobData[]> {
   }
 }
 
+async function scrapeWeWorkRemotely(): Promise<JobData[]> {
+  console.log('🔍 Scraping We Work Remotely...');
+
+  try {
+    const response = await fetch(WWR_RSS, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`We Work Remotely returned ${response.status}`);
+      return [];
+    }
+
+    const xmlText = await response.text();
+    const items = parseXML(xmlText);
+
+    const jobs: JobData[] = [];
+
+    for (const item of items.slice(0, 500)) {
+      try {
+        if (!item.title || !item.link) continue;
+
+        // Extract company from title (format: "Company: Job Title")
+        const titleParts = item.title.split(':');
+        const company = titleParts.length > 1 ? titleParts[0].trim() : 'Unknown Company';
+        const title = titleParts.length > 1 ? titleParts.slice(1).join(':').trim() : item.title;
+
+        const category = normalizeCategory([item.category || 'programming']);
+        const tags = item.category ? [item.category.toLowerCase()] : ['programming'];
+
+        // Generate unique ID from link
+        const sourceId = item.link.split('/').filter((p: string) => p).pop() || `wwr-${Date.now()}`;
+
+        const jobObj: JobData = {
+          title,
+          company,
+          description: item.description || 'No description provided.',
+          requirements: null,
+          location: 'Worldwide',
+          job_type: 'Full-time',
+          category,
+          tags,
+          salary_min: null,
+          salary_max: null,
+          salary_currency: 'USD',
+          apply_url: item.link,
+          company_url: null,
+          company_logo_url: null,
+          source: 'WeWorkRemotely',
+          source_id: sourceId,
+          published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          remote_type: 'fully-remote',
+          is_active: true,
+        };
+
+        jobs.push(jobObj);
+      } catch (err) {
+        console.error('Error parsing WeWorkRemotely job:', err);
+      }
+    }
+
+    console.log(`✅ Found ${jobs.length} jobs from We Work Remotely`);
+    return jobs;
+  } catch (error) {
+    console.error('❌ Error fetching We Work Remotely:', error);
+    return [];
+  }
+}
+
+async function scrapeWorkingNomads(): Promise<JobData[]> {
+  console.log('🔍 Scraping Working Nomads...');
+
+  try {
+    const response = await fetch(WORKING_NOMADS_API, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Working Nomads returned ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const jobsData = Array.isArray(data) ? data : [];
+
+    const jobs: JobData[] = [];
+
+    for (const job of jobsData.slice(0, 200)) {
+      try {
+        if (!job.id || !job.title || !job.company_name) continue;
+
+        const category = normalizeCategory([job.category || job.tags?.[0] || '']);
+        const tags = job.tags ? job.tags.slice(0, 5).map((t: string) => t.toLowerCase()) : [];
+
+        const jobObj: JobData = {
+          title: job.title,
+          company: job.company_name,
+          description: job.description || 'No description provided.',
+          requirements: null,
+          location: job.location || 'Worldwide',
+          job_type: normalizeJobType(job.type || 'full-time'),
+          category,
+          tags,
+          salary_min: null,
+          salary_max: null,
+          salary_currency: 'USD',
+          apply_url: job.url || `https://www.workingnomads.com/jobs?id=${job.id}`,
+          company_url: null,
+          company_logo_url: job.company_logo || null,
+          source: 'WorkingNomads',
+          source_id: String(job.id),
+          published_at: job.pub_date ? new Date(job.pub_date * 1000).toISOString() : new Date().toISOString(),
+          remote_type: 'fully-remote',
+          is_active: true,
+        };
+
+        jobs.push(jobObj);
+      } catch (err) {
+        console.error('Error parsing Working Nomads job:', err);
+      }
+    }
+
+    console.log(`✅ Found ${jobs.length} jobs from Working Nomads`);
+    return jobs;
+  } catch (error) {
+    console.error('❌ Error fetching Working Nomads:', error);
+    return [];
+  }
+}
+
+async function scrapeJustRemote(): Promise<JobData[]> {
+  console.log('🔍 Scraping JustRemote...');
+
+  try {
+    const response = await fetch(JUSTREMOTE_RSS, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`JustRemote returned ${response.status}`);
+      return [];
+    }
+
+    const xmlText = await response.text();
+    const items = parseXML(xmlText);
+
+    const jobs: JobData[] = [];
+
+    for (const item of items.slice(0, 400)) {
+      try {
+        if (!item.title || !item.link) continue;
+
+        // Try to extract company from description
+        const descLower = item.description?.toLowerCase() || '';
+        const companyMatch = descLower.match(/company[:\s]+([a-z0-9\s]+)/i);
+        const company = companyMatch ? companyMatch[1].trim() : 'Unknown Company';
+
+        const category = normalizeCategory([item.category || item.title]);
+        const tags = item.category ? [item.category.toLowerCase()] : [];
+
+        // Generate unique ID from link
+        const sourceId = item.link.split('/').filter((p: string) => p).pop() || `jr-${Date.now()}`;
+
+        const jobObj: JobData = {
+          title: item.title,
+          company,
+          description: item.description || 'No description provided.',
+          requirements: null,
+          location: 'Worldwide',
+          job_type: 'Full-time',
+          category,
+          tags,
+          salary_min: null,
+          salary_max: null,
+          salary_currency: 'USD',
+          apply_url: item.link,
+          company_url: null,
+          company_logo_url: null,
+          source: 'JustRemote',
+          source_id: sourceId,
+          published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+          remote_type: 'fully-remote',
+          is_active: true,
+        };
+
+        jobs.push(jobObj);
+      } catch (err) {
+        console.error('Error parsing JustRemote job:', err);
+      }
+    }
+
+    console.log(`✅ Found ${jobs.length} jobs from JustRemote`);
+    return jobs;
+  } catch (error) {
+    console.error('❌ Error fetching JustRemote:', error);
+    return [];
+  }
+}
+
 async function insertJobs(jobs: JobData[]): Promise<ScraperStats> {
   const stats: ScraperStats = {
     inserted: 0,
@@ -255,7 +501,9 @@ async function insertJobs(jobs: JobData[]): Promise<ScraperStats> {
         }
       } else {
         stats.inserted++;
-        console.log(`  ✅ Inserted: ${job.title} at ${job.company}`);
+        if (stats.inserted <= 10) { // Only log first 10 to avoid spam
+          console.log(`  ✅ Inserted: ${job.title} at ${job.company}`);
+        }
       }
     } catch (err) {
       stats.errors++;
@@ -323,6 +571,27 @@ export default async function handler(req: Request) {
     const remotiveJobs = await scrapeRemotive();
     allJobs.push(...remotiveJobs);
     sourceStats['Remotive'] = remotiveJobs.length;
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Scrape We Work Remotely
+    const wwrJobs = await scrapeWeWorkRemotely();
+    allJobs.push(...wwrJobs);
+    sourceStats['WeWorkRemotely'] = wwrJobs.length;
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Scrape Working Nomads
+    const wnJobs = await scrapeWorkingNomads();
+    allJobs.push(...wnJobs);
+    sourceStats['WorkingNomads'] = wnJobs.length;
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Scrape JustRemote
+    const jrJobs = await scrapeJustRemote();
+    allJobs.push(...jrJobs);
+    sourceStats['JustRemote'] = jrJobs.length;
 
     if (allJobs.length === 0) {
       console.log('⚠️  No jobs found to insert');
