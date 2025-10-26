@@ -70,7 +70,6 @@ interface JobData {
   source: string;
   source_id: string;
   published_at: string;
-  remote_type?: string;
   is_featured?: boolean;
   is_active: boolean;
 }
@@ -255,7 +254,6 @@ async function scrapeRemotive(): Promise<JobData[]> {
           source: 'Remotive',
           source_id: String(job.id),
           published_at: job.publication_date || new Date().toISOString(),
-          remote_type: 'fully-remote',
           is_active: true,
         };
 
@@ -326,7 +324,6 @@ async function scrapeWeWorkRemotely(): Promise<JobData[]> {
           source: 'WeWorkRemotely',
           source_id: sourceId,
           published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-          remote_type: 'fully-remote',
           is_active: true,
         };
 
@@ -390,7 +387,6 @@ async function scrapeWorkingNomads(): Promise<JobData[]> {
           source: 'WorkingNomads',
           source_id: String(job.id),
           published_at: job.pub_date ? new Date(job.pub_date * 1000).toISOString() : new Date().toISOString(),
-          remote_type: 'fully-remote',
           is_active: true,
         };
 
@@ -461,7 +457,6 @@ async function scrapeJustRemote(): Promise<JobData[]> {
           source: 'JustRemote',
           source_id: sourceId,
           published_at: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
-          remote_type: 'fully-remote',
           is_active: true,
         };
 
